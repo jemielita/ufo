@@ -9,6 +9,7 @@ import datetime
 import re
 from tqdm import tqdm
 from geopy.geocoders import Nominatim
+import random
 
 from geojson import Feature, FeatureCollection, Point, dump
 
@@ -156,10 +157,20 @@ class getUFO():
         cursor.execute('''SELECT * from SIGHTINGS WHERE USE_DATA = True''')
         sightlist = cursor.fetchall()
 
+        #Get list of unique locations on map, to dither elements that overlap
+        uniqueloc = []
+
         features = []
         i = 0
         for sighting in sightlist:
-            thispoint = Point((sighting[5], sighting[4]), precision=3)
+            #Check to see if location is unique, if not randomly dither
+            #Add multiple of longitude to latitude to get a unique number for each
+            if (100*sighting[4]) + sighting[5] in uniqueloc:
+                thispoint = Point((sighting[5]+0.01*random.random(), sighting[4]), precision=3)
+            else:
+                thispoint = Point((sighting[5], sighting[4]), precision=3)
+                uniqueloc.append(100*sighting[4] + sighting[5])
+
             features.append(Feature(geometry = thispoint, properties= {"time": sighting[1], "location": sighting[2] + ', '+ sighting[3],"shape": sighting[6], "duration": sighting[7], "summary": sighting[8]}))
             i+=1
             if(i>1000):
