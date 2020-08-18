@@ -160,10 +160,10 @@ class getUFO():
         i = 0
         for sighting in sightlist:
             thispoint = Point((sighting[5], sighting[4]), precision=3)
-            features.append(Feature(geometry = thispoint, properties= {"description": sighting[7]}))
+            features.append(Feature(geometry = thispoint, properties= {"time": sighting[1], "location": sighting[2] + ', '+ sighting[3],"shape": sighting[6], "duration": sighting[7], "summary": sighting[8]}))
             i+=1
-            #if(i>1000):
-            #    break
+            if(i>1000):
+                break
         feature_collection = FeatureCollection(features)
 
         with(open('ufo.geojson', 'w')) as outputfile:
