@@ -10,6 +10,8 @@ import re
 from tqdm import tqdm
 from geopy.geocoders import Nominatim
 
+from geojson import Feature, FeatureCollection, Point, dump
+
 class getUFO():
 
     def downloadSightings(self):
@@ -143,3 +145,28 @@ class getUFO():
                 i+=1
         print('Number of altered entries = ' + str(i))
         conn.close
+
+    def convertToGeoJson(self):
+        #Convert data to GeoJSON so it can be rendered on website
+
+        conn = psycopg2.connect(database="postgres", user='postgres', password='SQlpassword6789', host='127.0.0.1', port= '5432')
+        conn.autocommit = True
+        cursor = conn.cursor()
+
+        cursor.execute('''SELECT * from SIGHTINGS WHERE USE_DATA = True''')
+        sightlist = cursor.fetchall()
+
+        features = []
+        i = 0
+        for sighting in sightlist:
+            thispoint = Point((sighting[5], sighting[4]))
+            features.append(Feature(geometry = thispoint, propererties= {"Description": sighting[7]}))
+            i+=1
+            if(i>1000):
+                break
+        feature_collection = FeatureCollection(features)
+
+        with(open('ufo.geojson', 'w')) as outputfile:
+            dump(feature_collection, outputfile)
+        print('All sightings transfered to geojson file')
+        conn.close()
