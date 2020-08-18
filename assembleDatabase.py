@@ -166,7 +166,7 @@ class getUFO():
             #Check to see if location is unique, if not randomly dither
             #Add multiple of longitude to latitude to get a unique number for each
             if (100*sighting[4]) + sighting[5] in uniqueloc:
-                thispoint = Point((sighting[5]+0.1*random.random(), sighting[4]+0.1*random.random()), precision=3)
+                thispoint = Point((sighting[5]+0.01*random.random(), sighting[4]+0.01*random.random()), precision=3)
             else:
                 thispoint = Point((sighting[5], sighting[4]), precision=3)
                 uniqueloc.append(100*sighting[4] + sighting[5])
