@@ -159,8 +159,8 @@ class getUFO():
         features = []
         i = 0
         for sighting in sightlist:
-            thispoint = Point((sighting[5], sighting[4]))
-            features.append(Feature(geometry = thispoint, propererties= {"Description": sighting[7]}))
+            thispoint = Point((sighting[5], sighting[4]), precision=3)
+            features.append(Feature(geometry = thispoint, properties= {"description": sighting[7]}))
             i+=1
             if(i>1000):
                 break
