@@ -5,11 +5,13 @@ import time
 from pathlib import Path
 import os
 import psycopg2
+from psycopg2 import sql
 import datetime
 import re
 from tqdm import tqdm
 from geopy.geocoders import Nominatim
 import random
+import pandas as pd
 
 from geojson import Feature, FeatureCollection, Point, dump
 
@@ -33,7 +35,6 @@ class getUFO():
                 wget.download(source, str(dest))
 
                 time.sleep(1) #Don't overload the server
-
 
     def fillDatabase(self):
         #Fill postgreSQL database with entries from website
@@ -92,7 +93,6 @@ class getUFO():
         print("\n All records inserted into database!\n")
         conn.close()
 
-
     def getPosition(self):
         #Access database
         conn = psycopg2.connect(database="postgres", user='postgres', password='SQlpassword6789', host='127.0.0.1', port= '5432')
@@ -123,7 +123,6 @@ class getUFO():
             #time.sleep(0.5)
 
         conn.close()
-
 
     def cleanData(self):
         #Parse through database and add in a
@@ -166,7 +165,7 @@ class getUFO():
             #Check to see if location is unique, if not randomly dither
             #Add multiple of longitude to latitude to get a unique number for each
             if (100*sighting[4]) + sighting[5] in uniqueloc:
-                thispoint = Point((sighting[5]+0.01*random.random(), sighting[4]+0.01*random.random()), precision=3)
+                thispoint = Point((sighting[5]+0.03*random.random(), sighting[4]+0.03*random.random()), precision=3)
             else:
                 thispoint = Point((sighting[5], sighting[4]), precision=3)
                 uniqueloc.append(100*sighting[4] + sighting[5])
@@ -181,3 +180,34 @@ class getUFO():
             dump(feature_collection, outputfile)
         print('All sightings transfered to geojson file')
         conn.close()
+
+    def extractFields(self,*args):
+    #Extract all desired fields and return in a pandas dataframe.
+    #Will be used for exploratory data analysis
+
+    #Should have error message if doesn't match string
+
+        #Access database
+        conn = psycopg2.connect(database="postgres", user='postgres', password='SQlpassword6789', host='127.0.0.1', port= '5432')
+        conn.autocommit = True
+        cursor = conn.cursor()
+
+        #Go through all entries, extrat them to a dictionary
+        data = {}
+        for i, arg in enumerate(args):
+            qry = sql.SQL("SELECT {} FROM SIGHTINGS WHERE USE_DATA = true").format(sql.Identifier(arg))
+            cursor.execute(qry)
+            b = cursor.fetchone()
+
+            #thisdata = list(map(lambda x:x[1:], cursor.fetchall()) )
+            thisdata = cursor.fetchall()
+            listdata = []
+            #This is a cludge to convert tuple to list, otherwise there's an extra
+            #parantheses in output. There has to be a better way to do this.
+            for x in thisdata:
+                listdata.append(x[0])
+            data.update({arg: listdata})
+
+        conn.close()
+        df = pd.DataFrame(data)
+        return df
